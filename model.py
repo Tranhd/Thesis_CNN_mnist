@@ -4,7 +4,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 
 class MnistCNN(object):
-    def __init__(self, sess, save_dir='./MnistCNN/', log_dir='./logs/'):
+    def __init__(self, sess, save_dir='./MnistCNN_save/', log_dir='./logs/'):
         self.sess = sess
         self.build_model()
         self.save_dir = save_dir
@@ -16,8 +16,9 @@ class MnistCNN(object):
             self.labels = tf.placeholder(tf.int16, [None, 10])
             self.training = tf.placeholder(tf.bool)
             self.learning_rate = tf.placeholder(tf.float32)
+            self.activations = list()
             self.predictions, self.logits = self.network(self.inputs)
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.labels, logits=self.logits)
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=self.logits)
             self.loss = tf.reduce_mean(cross_entropy)
             self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
             self.saver = tf.train.Saver()
@@ -57,8 +58,10 @@ class MnistCNN(object):
         except:
             raise Exception(f'Train the model before testing, cant find checkpoint in {self.save_dir}')
 
-        preds = self.predictions.eval(session = self.sess, feed_dict={self.inputs: test_image, self.training: False})
-        return preds
+        probs, activations = self.sess.run([self.predictions, self.activations], feed_dict={self.inputs: test_image, self.training: False})
+
+        predictions = np.argmax(probs, axis=1)
+        return predictions, probs, activations
 
     def network(self, input):
         with tf.variable_scope('Network'):
@@ -70,7 +73,7 @@ class MnistCNN(object):
                 kernel_size=[5, 5],
                 padding="same",
                 activation=tf.nn.relu)
-
+            self.activations.append(conv1)
             # Pooling Layer #1
             pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
 
@@ -81,18 +84,20 @@ class MnistCNN(object):
                 kernel_size=[5, 5],
                 padding="same",
                 activation=tf.nn.relu)
+            self.activations.append(conv2)
             pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
 
             # Dense Layer
             pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
             dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+            self.activations.append(dense)
             dropout = tf.layers.dropout(
                 inputs=dense, rate=0.4, training=self.training)
 
             # Logits Layer
             logits = tf.layers.dense(inputs=dropout, units=10)
+            self.activations.append(logits)
             predictions = tf.nn.softmax(logits)
-
             return predictions, logits
 
 
@@ -102,10 +107,246 @@ x_train = mnist.train.images
 y_train = mnist.train.labels
 x_val = mnist.validation.images
 y_val = mnist.validation.labels
-#print(np.shape(x_train[1:100,:,:,:]))
+x_test = mnist.test.images
+y_test = mnist.test.labels
+print(np.shape(x_test))
 
 tf.reset_default_graph()
 sess = tf.Session()
 net = MnistCNN(sess)
-net.train_model(x_train[0:1000,:,:,:], y_train[0:1000,:], x_val, y_val, epochs=2, verbose=1)
-net.predict(x_train)
+
+#net.train_model(x_train, y_train, x_val, y_val, epochs=50, verbose=1)
+
+preds, _, activations = net.predict(x_test)
+accuracy = np.sum(np.argmax(y_test, 1) == preds)
+print(f'Test accuracy {accuracy/100} %')
+
+print(np.shape(x_test))
+for i in range(len(activations)):
+    print(np.shape(activations[i]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
