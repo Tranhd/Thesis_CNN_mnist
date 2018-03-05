@@ -102,7 +102,7 @@ x_train = mnist.train.images
 y_train = mnist.train.labels
 x_val = mnist.validation.images
 y_val = mnist.validation.labels
-print(np.shape(x_train[1:100,:,:,:]))
+#print(np.shape(x_train[1:100,:,:,:]))
 
 tf.reset_default_graph()
 sess = tf.Session()
