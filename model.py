@@ -1,5 +1,5 @@
 # model.py
-# The CNN-classifier to be supervised using the Mnist dataset
+# The CNN-classifier to be supervised on the Mnist dataset
 
 
 # Imports
