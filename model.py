@@ -8,7 +8,7 @@ import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 
 class MnistCNN(object):
-    def __init__(self, sess, save_dir='./MnistCNN_save/', log_dir='./logs/'):
+    def __init__(self, sess, save_dir='./MnistCNN_save/'):
         """
         Init-function of the Mnist CNN class
 
@@ -17,20 +17,75 @@ class MnistCNN(object):
         sess : Tensorflow session
         save_dir (optional): String
             Save directory for the graph
-        log_dir (optional): String
-            Where to save tensorboard log files
-
         """
         self.sess = sess # Assign Tensorflow session to model.
         self.save_dir = save_dir
-        self.log_dir = log_dir
         self.build_model() # Build the graph.
 
+    def network(self, input):
+        """
+        Predicts the class of test_image
+
+        Parameters
+        ----------
+        test_image : numpy array
+            The test_images to be classified [n_examples, 28, 28 ,1]
+
+        Returns
+        -------
+        predictions : numpy array
+            The predicted class for every example in test_image [n_examples, 1]
+        probs : numpy array
+            Probability distribution for the predictions [n_examples, 10]
+        activations : list
+            List with activations from each layer of the network, entry i contains
+            activations from layer i, numpy array of shape [n_examples, feature map size of layer i]
+
+        Raises
+        ------
+        Exception
+            When model has no checkpoint and weights to load.
+        """
+        with tf.variable_scope('Network'):
+
+            # Convolutional Layer #1
+            conv1 = tf.layers.conv2d(
+                inputs=input,
+                filters=32,
+                kernel_size=[5, 5],
+                padding="same",
+                activation=tf.nn.relu)
+            self.activations.append(conv1)
+            # Pooling Layer #1
+            pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+
+            # Convolutional Layer #2 and Pooling Layer #2
+            conv2 = tf.layers.conv2d(
+                inputs=pool1,
+                filters=64,
+                kernel_size=[5, 5],
+                padding="same",
+                activation=tf.nn.relu)
+            self.activations.append(conv2)
+            pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
+
+            # Dense Layer
+            pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
+            dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+            self.activations.append(dense)
+            dropout = tf.layers.dropout(
+                inputs=dense, rate=0.4, training=self.training)
+
+            # Logits Layer
+            logits = tf.layers.dense(inputs=dropout, units=10)
+            self.activations.append(logits)
+            predictions = tf.nn.softmax(logits)
+            return predictions, logits
 
     def build_model(self):
         """
         Builds the tensorflow graph
-        
+
         """
         # Placeholders
         with tf.variable_scope('Placeholders'):
@@ -48,7 +103,7 @@ class MnistCNN(object):
             self.predictions, self.logits = self.network(self.inputs) # Builds network
 
         # Loss.
-        with tf.variable_scope('Loss')
+        with tf.variable_scope('Loss'):
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=self.logits) # Cross entropy loss
             self.loss = tf.reduce_mean(cross_entropy) # Loss
 
@@ -107,304 +162,70 @@ class MnistCNN(object):
             validation_loss = self.loss.eval(session=self.sess,
                                              feed_dict={self.inputs: x_val, self.labels: y_val, self.training: False}) # Evaluate on validation set.
             if verbose: print(f'Validation loss {validation_loss}') # Print validation loss for epoch
-        self.saver.save(sess, save_path=self.save_dir + 'Cnn_mnist.ckpt') # Save parameters.
+        self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt') # Save parameters.
+
 
 
     def predict(self, test_image):
-        try:
-            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))
-        except:
-            raise Exception(f'Train the model before testing, cant find checkpoint in {self.save_dir}')
+        """
+        Predicts the class of test_image
 
-        probs, activations = self.sess.run([self.predictions, self.activations], feed_dict={self.inputs: test_image, self.training: False})
+        Parameters
+        ----------
+        test_image : numpy array
+            The test_images to be classified [n_examples, 28, 28 ,1]
+
+        Returns
+        -------
+        predictions : numpy array
+            The predicted class for every example in test_image [n_examples, 1]
+        probs : numpy array
+            Probability distribution for the predictions [n_examples, 10]
+        activations : list
+            List with activations from each layer of the network, entry i contains
+            activations from layer i, numpy array of shape [n_examples, feature map size of layer i]
+
+        Raises
+        ------
+        Exception
+            When model has no checkpoint and weights to load.
+        """
+        try:
+            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir)) # Try to restore weights.
+        except:
+            raise Exception(f'Train the model before testing, cant find checkpoint in {self.save_dir}') # Otherwise => Exception.
+
+        probs, activations = self.sess.run([self.predictions, self.activations],
+                                           feed_dict={self.inputs: test_image, self.training: False}) # Predict.
 
         predictions = np.argmax(probs, axis=1)
         return predictions, probs, activations
 
-    def network(self, input):
-        with tf.variable_scope('Network'):
 
-            # Convolutional Layer #1
-            conv1 = tf.layers.conv2d(
-                inputs=input,
-                filters=32,
-                kernel_size=[5, 5],
-                padding="same",
-                activation=tf.nn.relu)
-            self.activations.append(conv1)
-            # Pooling Layer #1
-            pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
-
-            # Convolutional Layer #2 and Pooling Layer #2
-            conv2 = tf.layers.conv2d(
-                inputs=pool1,
-                filters=64,
-                kernel_size=[5, 5],
-                padding="same",
-                activation=tf.nn.relu)
-            self.activations.append(conv2)
-            pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[2, 2], strides=2)
-
-            # Dense Layer
-            pool2_flat = tf.reshape(pool2, [-1, 7 * 7 * 64])
-            dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
-            self.activations.append(dense)
-            dropout = tf.layers.dropout(
-                inputs=dense, rate=0.4, training=self.training)
-
-            # Logits Layer
-            logits = tf.layers.dense(inputs=dropout, units=10)
-            self.activations.append(logits)
-            predictions = tf.nn.softmax(logits)
-            return predictions, logits
-
-
-
+'''
 mnist = input_data.read_data_sets('MNIST_data', one_hot=True, reshape=False, validation_size=5000)
+
 x_train = mnist.train.images
 y_train = mnist.train.labels
 x_val = mnist.validation.images
 y_val = mnist.validation.labels
 x_test = mnist.test.images
 y_test = mnist.test.labels
-print(np.shape(x_test))
+print(x_train.shape)
 
 tf.reset_default_graph()
 sess = tf.Session()
 net = MnistCNN(sess)
 
+
 #net.train_model(x_train, y_train, x_val, y_val, epochs=50, verbose=1)
 
 preds, _, activations = net.predict(x_test)
+
 accuracy = np.sum(np.argmax(y_test, 1) == preds)
 print(f'Test accuracy {accuracy/100} %')
 
 print(np.shape(x_test))
 for i in range(len(activations)):
     print(np.shape(activations[i]))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+'''
