@@ -21,11 +21,12 @@ When the model is trained, it is ready to perform inference on new data. Predict
 * The prediction for each of the examples in 'predictions' [n_examples, 1],
 * The probability distribution over all classes for each of the examples in 'probs' [n_examples, 10], 
 * The activations from each of the layers in the networks as a list in 'activations', where the ith object is the activations for layer i for all examples [n_examples, dimension of activation map of layer i]. 
-For example when predicting the test data:
+
+When predicting the test data:
 ```python
 predictions, probs, activations = net.predict(x_test)
 ```
- To calculate the accuracy of the predictions the following code-snippet can be used.
+ To calculate the accuracy of the predictions the following code-snippet can be used:
  ```python
 accuracy = np.sum(np.argmax(y_test, 1) == preds)
 print(f'Test accuracy {accuracy/100} %')
