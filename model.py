@@ -5,10 +5,11 @@
 # Imports
 import tensorflow as tf
 import numpy as np
-from tensorflow.examples.tutorials.mnist import input_data
+from utilities import *
+
 
 class MnistCNN(object):
-    def __init__(self, sess, save_dir='./MnistCNN_save/'):
+    def __init__(self, sess, save_dir='./MnistCNN_save/', omniglot_bool=True):
         """
         Init-function of the Mnist CNN class
 
@@ -18,11 +19,15 @@ class MnistCNN(object):
         save_dir (optional): String
             Save directory for the graph
         """
-        self.sess = sess # Assign Tensorflow session to model.
+        self.sess = sess  # Assign Tensorflow session to model.
         self.save_dir = save_dir
-        self.build_model() # Build the graph.
+        if omniglot_bool:
+            self.soft_out = 11
+        else:
+            self.soft_out = 10
+        self.build_model()  # Build the graph.
 
-    def network(self, input):
+    def network(self, input, omniglot_bool):
         """
         Predicts the class of test_image
 
@@ -77,22 +82,22 @@ class MnistCNN(object):
                 inputs=dense, rate=0.4, training=self.training)
 
             # Logits Layer
-            logits = tf.layers.dense(inputs=dropout, units=10)
+            logits = tf.layers.dense(inputs=dropout, units=self.soft_out)
             self.activations.append(logits)
             predictions = tf.nn.softmax(logits)
             return predictions, logits
 
     def build_model(self):
         """
-        Builds the tensorflow graph
+        Builds the Tensorflow graph
 
         """
         # Placeholders
         with tf.variable_scope('Placeholders'):
-            self.inputs = tf.placeholder(tf.float32, [None, 28, 28, 1]) # Mnist input.
-            self.labels = tf.placeholder(tf.int16, [None, 10]) # Labels, one-hot encoded.
-            self.training = tf.placeholder(tf.bool) # Bool indicating if in training mode.
-            self.learning_rate = tf.placeholder(tf.float32) # Learning rate.
+            self.inputs = tf.placeholder(tf.float32, [None, 28, 28, 1])  # Mnist input.
+            self.labels = tf.placeholder(tf.int16, [None, self.soft_out])  # Labels, one-hot encoded.
+            self.training = tf.placeholder(tf.bool)  # Bool indicating if in training mode.
+            self.learning_rate = tf.placeholder(tf.float32)  # Learning rate.
 
         # Activations from CNN
         with tf.variable_scope('Activations'):
@@ -100,17 +105,16 @@ class MnistCNN(object):
 
         # Predictions and Logits
         with tf.variable_scope('Predictions'):
-            self.predictions, self.logits = self.network(self.inputs) # Builds network
+            self.predictions, self.logits = self.network(self.inputs, self.soft_out)  # Builds network
 
         # Loss.
         with tf.variable_scope('Loss'):
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=self.logits) # Cross entropy loss
-            self.loss = tf.reduce_mean(cross_entropy) # Loss
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=self.logits)  # Cross entropy loss
+            self.loss = tf.reduce_mean(cross_entropy)  # Loss
 
-        self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(self.loss) # Optimizer
+        self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(self.loss)  # Optimizer
 
-        self.saver = tf.train.Saver() # Saver
-
+        self.saver = tf.train.Saver()  # Saver
 
     def train_model(self, x_train, y_train, x_val, y_val, batch_size=64, epochs=100, learning_rate=1e-2, verbose=1):
         """
@@ -137,33 +141,33 @@ class MnistCNN(object):
         """
         N = len(x_train) // batch_size # Number of iterations per epoch
         try:
-            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir)) # Restore if checkpoint exists.
+            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))  # Restore if checkpoint exists.
         except:
-            self.sess.run(tf.global_variables_initializer()) # Otherwise initialize.
+            self.sess.run(tf.global_variables_initializer())  # Otherwise initialize.
         print('Starting training ...')
         for epoch in range(epochs):
             idx = np.random.permutation(len(x_train))
-            x, y = x_train[idx], y_train[idx] # Shuffle training data.
+            #x, y = x_train[idx], y_train[idx]  # Shuffle training data.
+            x, y = x_train, y_train
             if verbose: print('='*30 + f' Epoch {epoch+1} ' + '='*30)
             loss = 0
             batch_start = 0
             batch_end = batch_size
             for i in range(N):
                 if batch_end <= len(x):
-                    x_batch, y_batch = x[batch_start:batch_end, :, :, :], y[batch_start:batch_end, :] # Create batch.
+                    x_batch, y_batch = x[batch_start:batch_end, :, :, :], y[batch_start:batch_end, :]  # Create batch.
                     _, loss_ = self.sess.run([self.optimizer, self.loss],
-                                             feed_dict = {self.inputs: x_batch, self.labels: y_batch, self.learning_rate: learning_rate,
-                                                          self.training: True}) # Optimize parameters for batch.
+                                             feed_dict={self.inputs: x_batch, self.labels: y_batch, self.learning_rate: learning_rate,
+                                                          self.training: True})  # Optimize parameters for batch.
                     loss = loss + loss_ # Add to total epoch loss.
                     batch_start = batch_end  # Next batch.
                     batch_end = batch_end + batch_size
-            if verbose: print(f'Average Training loss {loss/N}') # Print average training loss for epoch.
+            if verbose: print(f'Average Training loss {loss/N}')  # Print average training loss for epoch.
 
             validation_loss = self.loss.eval(session=self.sess,
-                                             feed_dict={self.inputs: x_val, self.labels: y_val, self.training: False}) # Evaluate on validation set.
-            if verbose: print(f'Validation loss {validation_loss}') # Print validation loss for epoch
-        self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt') # Save parameters.
-
+                                             feed_dict={self.inputs: x_val, self.labels: y_val, self.training: False})  # Evaluate on validation set.
+            if verbose: print(f'Validation loss {validation_loss}')  # Print validation loss for epoch
+        self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt')  # Save parameters.
 
 
     def predict(self, test_image):
@@ -191,41 +195,30 @@ class MnistCNN(object):
             When model has no checkpoint and weights to load.
         """
         try:
-            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir)) # Try to restore weights.
+            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))  # Try to restore weights.
         except:
-            raise Exception(f'Train the model before testing, cant find checkpoint in {self.save_dir}') # Otherwise => Exception.
+            raise Exception(f'Train the model before testing, cant find checkpoint in {self.save_dir}')  # Otherwise => Exception.
 
         probs, activations = self.sess.run([self.predictions, self.activations],
-                                           feed_dict={self.inputs: test_image, self.training: False}) # Predict.
+                                           feed_dict={self.inputs: test_image, self.training: False})  # Predict.
 
         predictions = np.argmax(probs, axis=1)
         return predictions, probs, activations
 
 
-'''
-mnist = input_data.read_data_sets('MNIST_data', one_hot=True, reshape=False, validation_size=5000)
-
-x_train = mnist.train.images
-y_train = mnist.train.labels
-x_val = mnist.validation.images
-y_val = mnist.validation.labels
-x_test = mnist.test.images
-y_test = mnist.test.labels
-print(x_train.shape)
+x_train, y_train, x_val, y_val, x_test, y_test = load_datasets(test_size=10, omniglot_bool=True, force=False)
 
 tf.reset_default_graph()
 sess = tf.Session()
-net = MnistCNN(sess)
+net = MnistCNN(sess, save_dir='./MnistCNN_save/', omniglot_bool=True)
 
-
-#net.train_model(x_train, y_train, x_val, y_val, epochs=50, verbose=1)
+net.train_model(x_train, y_train, x_val, y_val, epochs=1, verbose=1)
 
 preds, _, activations = net.predict(x_test)
 
 accuracy = np.sum(np.argmax(y_test, 1) == preds)
-print(f'Test accuracy {accuracy/100} %')
+print(f'Test accuracy {accuracy/len(y_test)} %')
 
 print(np.shape(x_test))
 for i in range(len(activations)):
     print(np.shape(activations[i]))
-'''
