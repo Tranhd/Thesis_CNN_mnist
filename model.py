@@ -9,7 +9,7 @@ from utilities import *
 
 
 class MnistCNN(object):
-    def __init__(self, sess, save_dir='./MnistCNN_save/', omniglot_bool=True):
+    def __init__(self, sess, save_dir='./MnistCNN_save/'):
         """
         Init-function of the Mnist CNN class
 
@@ -21,13 +21,9 @@ class MnistCNN(object):
         """
         self.sess = sess  # Assign Tensorflow session to model.
         self.save_dir = save_dir
-        if omniglot_bool:
-            self.soft_out = 11
-        else:
-            self.soft_out = 10
         self.build_model()  # Build the graph.
 
-    def network(self, input, omniglot_bool):
+    def network(self, input):
         """
         Predicts the class of test_image
 
@@ -82,7 +78,7 @@ class MnistCNN(object):
                 inputs=dense, rate=0.4, training=self.training)
 
             # Logits Layer
-            logits = tf.layers.dense(inputs=dropout, units=self.soft_out)
+            logits = tf.layers.dense(inputs=dropout, units=10)
             self.activations.append(logits)
             predictions = tf.nn.softmax(logits)
             return predictions, logits
@@ -95,7 +91,7 @@ class MnistCNN(object):
         # Placeholders
         with tf.variable_scope('Placeholders'):
             self.inputs = tf.placeholder(tf.float32, [None, 28, 28, 1])  # Mnist input.
-            self.labels = tf.placeholder(tf.int16, [None, self.soft_out])  # Labels, one-hot encoded.
+            self.labels = tf.placeholder(tf.int16, [None, 10])  # Labels, one-hot encoded.
             self.training = tf.placeholder(tf.bool)  # Bool indicating if in training mode.
             self.learning_rate = tf.placeholder(tf.float32)  # Learning rate.
 
@@ -105,7 +101,7 @@ class MnistCNN(object):
 
         # Predictions and Logits
         with tf.variable_scope('Predictions'):
-            self.predictions, self.logits = self.network(self.inputs, self.soft_out)  # Builds network
+            self.predictions, self.logits = self.network(self.inputs)  # Builds network
 
         # Loss.
         with tf.variable_scope('Loss'):
@@ -147,8 +143,7 @@ class MnistCNN(object):
         print('Starting training ...')
         for epoch in range(epochs):
             idx = np.random.permutation(len(x_train))
-            #x, y = x_train[idx], y_train[idx]  # Shuffle training data.
-            x, y = x_train, y_train
+            x, y = x_train[idx], y_train[idx]  # Shuffle training data.
             if verbose: print('='*30 + f' Epoch {epoch+1} ' + '='*30)
             loss = 0
             batch_start = 0
@@ -159,7 +154,7 @@ class MnistCNN(object):
                     _, loss_ = self.sess.run([self.optimizer, self.loss],
                                              feed_dict={self.inputs: x_batch, self.labels: y_batch, self.learning_rate: learning_rate,
                                                           self.training: True})  # Optimize parameters for batch.
-                    loss = loss + loss_ # Add to total epoch loss.
+                    loss = loss + loss_  # Add to total epoch loss.
                     batch_start = batch_end  # Next batch.
                     batch_end = batch_end + batch_size
             if verbose: print(f'Average Training loss {loss/N}')  # Print average training loss for epoch.
@@ -168,7 +163,6 @@ class MnistCNN(object):
                                              feed_dict={self.inputs: x_val, self.labels: y_val, self.training: False})  # Evaluate on validation set.
             if verbose: print(f'Validation loss {validation_loss}')  # Print validation loss for epoch
         self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt')  # Save parameters.
-
 
     def predict(self, test_image):
         """
@@ -206,16 +200,21 @@ class MnistCNN(object):
         return predictions, probs, activations
 
 
+# Load MNIST and, if omniglot_bool, Omniglot datasets.
 x_train, y_train, x_val, y_val, x_test, y_test = load_datasets(test_size=10, omniglot_bool=True, force=False)
 
+# Build model.
 tf.reset_default_graph()
 sess = tf.Session()
-net = MnistCNN(sess, save_dir='./MnistCNN_save/', omniglot_bool=True)
+net = MnistCNN(sess)
 
+# Train model.
 net.train_model(x_train, y_train, x_val, y_val, epochs=1, verbose=1)
 
+# Test model.
 preds, _, activations = net.predict(x_test)
 
+# Evaluate with accuracy.
 accuracy = np.sum(np.argmax(y_test, 1) == preds)
 print(f'Test accuracy {accuracy/len(y_test)} %')
 
