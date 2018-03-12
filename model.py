@@ -13,10 +13,8 @@ class MnistCNN(object):
         """
         Init-function of the Mnist CNN class
 
-        Parameters
-        ----------
-        sess : Tensorflow session
-        save_dir (optional): String
+        :param sess: Tensorflow session
+        :param save_dir: String
             Save directory for the graph
         """
         self.sess = sess  # Assign Tensorflow session to model.
@@ -27,24 +25,15 @@ class MnistCNN(object):
         """
         Predicts the class of test_image
 
-        Parameters
-        ----------
-        test_image : numpy array
+        :param input: numpy array
             The test_images to be classified [n_examples, 28, 28 ,1]
 
-        Returns
-        -------
-        predictions : numpy array
-            The predicted class for every example in test_image [n_examples, 1]
-        probs : numpy array
+        :return predictions: numpy array
+            The predicted class for every example in test_image [n_examples, 1]:
+        :return probs: numpy array
             Probability distribution for the predictions [n_examples, 10]
-        activations : list
-            List with activations from each layer of the network, entry i contains
-            activations from layer i, numpy array of shape [n_examples, feature map size of layer i]
 
-        Raises
-        ------
-        Exception
+        :raises: Exception
             When model has no checkpoint and weights to load.
         """
         with tf.variable_scope('Network'):
@@ -114,25 +103,23 @@ class MnistCNN(object):
 
     def train_model(self, x_train, y_train, x_val, y_val, batch_size=64, epochs=100, learning_rate=1e-2, verbose=1):
         """
-        Train the model.
+        Trains the model
 
-        Parameters
-        ----------
-        x_train : numpy array
+        :param x_train: numpy array
             Training set input data [batch_size, 28, 28, 1]
-        y_train : numpy array
+        :param y_train: y_train : numpy array
             Training set labels [batch_size, 10] (one-hot encoded)
-        x_val : numpy array
+        :param x_val: x_val : numpy array
             Validation set input data [batch_size, 28, 28, 1]
-        y_val : numpy array
+        :param y_val: y_val : numpy array
             Validation set labels [batch_size, 10] (one-hot encoded)
-        batch_size (optional): int
+        :param batch_size: batch_size (optional): int
             Batch size
-        epochs (optional): int
+        :param epochs: epochs (optional): int
             Epochs to run
-        learning_rate (optional): float
+        :param learning_rate: learning_rate (optional): float
             Learning rate
-        verbose (optional): binary 0 or 1
+        :param verbose: verbose (optional): binary 0 or 1
             Specifies level of Info
         """
         N = len(x_train) // batch_size # Number of iterations per epoch
@@ -168,24 +155,18 @@ class MnistCNN(object):
         """
         Predicts the class of test_image
 
-        Parameters
-        ----------
-        test_image : numpy array
+        :param test_image: numpy array
             The test_images to be classified [n_examples, 28, 28 ,1]
 
-        Returns
-        -------
-        predictions : numpy array
+        :return predictions: numpy array
             The predicted class for every example in test_image [n_examples, 1]
-        probs : numpy array
+        :return probs: numpy array
             Probability distribution for the predictions [n_examples, 10]
-        activations : list
+        :return activations : list
             List with activations from each layer of the network, entry i contains
             activations from layer i, numpy array of shape [n_examples, feature map size of layer i]
 
-        Raises
-        ------
-        Exception
+        :raises Exception
             When model has no checkpoint and weights to load.
         """
         try:
