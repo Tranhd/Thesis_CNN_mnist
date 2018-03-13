@@ -216,5 +216,15 @@ for cl in range(10):
     class_activations.append(act)
     print(np.shape(act))
 
-plt.imshow(np.transpose(class_activations[0]))
+
+rows, cols = 10,1
+fix, axes = plt.subplots(figsize=(12,5), nrows=rows, ncols=cols, squeeze=False)
+k = 0
+for ax_row in axes:
+    for ax in ax_row:
+        ax.imshow((class_activations[k]), aspect='auto')
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+        k = k+1
+
 plt.show()
