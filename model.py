@@ -5,7 +5,8 @@
 # Imports
 import tensorflow as tf
 import numpy as np
-from utilities import *
+from tensorflow.examples.tutorials.mnist import input_data
+import matplotlib.pyplot as plt
 
 
 class MnistCNN(object):
@@ -182,7 +183,7 @@ class MnistCNN(object):
 
 
 # Load MNIST and, if omniglot_bool, Omniglot datasets.
-x_train, y_train, x_val, y_val, x_test, y_test = load_datasets(test_size=10, omniglot_bool=True, force=False)
+mnist = input_data.read_data_sets('MNIST_data', validation_size=5000, reshape=False, one_hot= True)
 
 # Build model.
 tf.reset_default_graph()
@@ -190,15 +191,30 @@ sess = tf.Session()
 net = MnistCNN(sess)
 
 # Train model.
-net.train_model(x_train, y_train, x_val, y_val, epochs=1, verbose=1)
+#net.train_model(mnist.train.images, mnist.train.labels, mnist.validation.images, mnist.validation.labels, epochs=1, verbose=1)
 
 # Test model.
+
+x_test = mnist.test.images[1:1000,:,:,:]
+y_test = mnist.test.labels[1:1000,:]
 preds, _, activations = net.predict(x_test)
+print(np.shape(y_test))
+print(np.shape(x_test))
 
 # Evaluate with accuracy.
 accuracy = np.sum(np.argmax(y_test, 1) == preds)
-print(f'Test accuracy {accuracy/len(y_test)} %')
+print(f'Test accuracy {accuracy*100/len(y_test)} %')
 
-print(np.shape(x_test))
-for i in range(len(activations)):
-    print(np.shape(activations[i]))
+#for i in range(len(activations)):
+#    print(np.shape(activations[i]))
+
+class_activations = list()
+for cl in range(10):
+    i = (np.argmax(y_test,1) == preds)
+    i = i & (preds == cl)
+    act = activations[-1][i,:]
+    class_activations.append(act)
+    print(np.shape(act))
+
+plt.imshow(np.transpose(class_activations[0]))
+plt.show()
