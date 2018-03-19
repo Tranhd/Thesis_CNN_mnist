@@ -4,7 +4,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 
 class MnistCNN(object):
-    def __init__(self, sess, save_dir='./MnistCNN_save/', log_dir='./logs/'):
+    def __init__(self, sess, save_dir='MnistCNN_save/', log_dir='logs/'):
         self.sess = sess
         self.build_model()
         self.save_dir = save_dir
@@ -101,7 +101,7 @@ class MnistCNN(object):
             return predictions, logits
 
 
-
+"""
 mnist = input_data.read_data_sets('MNIST_data', one_hot=True, reshape=False, validation_size=5000)
 x_train = mnist.train.images
 y_train = mnist.train.labels
@@ -120,11 +120,10 @@ net = MnistCNN(sess)
 preds, _, activations = net.predict(x_test)
 accuracy = np.sum(np.argmax(y_test, 1) == preds)
 print(f'Test accuracy {accuracy/100} %')
-
 print(np.shape(x_test))
 for i in range(len(activations)):
     print(np.shape(activations[i]))
-
+"""
 
 
 
