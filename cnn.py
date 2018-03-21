@@ -24,7 +24,7 @@ class MnistCNN(object):
             self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))  # Restore if checkpoint exists.
             self.restored = True
         except:
-            self.sess.run(tf.global_variables_initializer())  # Otherwise initialize.
+            pass
 
     def network(self, input):
         """
@@ -132,7 +132,7 @@ class MnistCNN(object):
             self.restored = True
         except:
             self.sess.run(tf.global_variables_initializer())  # Otherwise initialize.
-            
+
         N = len(x_train) // batch_size # Number of iterations per epoch
         print('Starting training ...')
         for epoch in range(epochs):
