@@ -19,6 +19,12 @@ class MnistCNN(object):
         self.sess = sess  # Assign Tensorflow session to model.
         self.save_dir = save_dir
         self.build_model()  # Build the graph.
+        self.restored = False
+        try:
+            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))  # Restore if checkpoint exists.
+            self.restored = True
+        except:
+            self.sess.run(tf.global_variables_initializer())  # Otherwise initialize.
 
     def network(self, input):
         """
@@ -122,10 +128,6 @@ class MnistCNN(object):
             Specifies level of Info
         """
         N = len(x_train) // batch_size # Number of iterations per epoch
-        try:
-            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))  # Restore if checkpoint exists.
-        except:
-            self.sess.run(tf.global_variables_initializer())  # Otherwise initialize.
         print('Starting training ...')
         for epoch in range(epochs):
             idx = np.random.permutation(len(x_train))
@@ -174,9 +176,7 @@ class MnistCNN(object):
         :raises Exception
             When model has no checkpoint and weights to load.
         """
-        try:
-            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))  # Try to restore weights.
-        except:
+        if self.restored == False:
             raise Exception(f'Train the model before testing, cant find checkpoint in {self.save_dir}')  # Otherwise => Exception.
 
         probs, activations = self.sess.run([self.predictions, self.activations],
