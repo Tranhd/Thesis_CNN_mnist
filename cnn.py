@@ -127,6 +127,12 @@ class MnistCNN(object):
         :param verbose: verbose (optional): binary 0 or 1
             Specifies level of Info
         """
+        try:
+            self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))  # Restore if checkpoint exists.
+            self.restored = True
+        except:
+            self.sess.run(tf.global_variables_initializer())  # Otherwise initialize.
+            
         N = len(x_train) // batch_size # Number of iterations per epoch
         print('Starting training ...')
         for epoch in range(epochs):
