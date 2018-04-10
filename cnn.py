@@ -23,6 +23,7 @@ class MnistCNN(object):
         try:
             self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))  # Restore if checkpoint exists.
             self.restored = True
+            print('Restored weights')
         except:
             pass
 
@@ -164,7 +165,7 @@ class MnistCNN(object):
                 print(f'Validation loss {validation_loss}')  # Print validation loss for epoch
         self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt')  # Save parameters.
 
-    def predict(self, test_image):
+    def predict(self, test_image, dropout_enabled=False):
         """
         Predicts the class of test_image
 
@@ -186,7 +187,7 @@ class MnistCNN(object):
             raise Exception(f'Train the model before testing, cant find checkpoint in {self.save_dir}')  # Otherwise => Exception.
 
         probs, activations = self.sess.run([self.predictions, self.activations],
-                                           feed_dict={self.inputs: test_image, self.training: False})  # Predict.
+                                           feed_dict={self.inputs: test_image, self.training: dropout_enabled})  # Predict.
 
         predictions = np.argmax(probs, axis=1)
         return predictions, probs, activations
