@@ -87,6 +87,7 @@ class MnistCNN(object):
         with tf.variable_scope('Placeholders'):
             self.inputs = tf.placeholder(tf.float32, [None, 28, 28, 1])  # Mnist input.
             self.labels = tf.placeholder(tf.int16, [None, 10])  # Labels, one-hot encoded.
+            #self.training = tf.placeholder_with_default(False, (), name='mode')
             self.training = tf.placeholder(tf.bool)  # Bool indicating if in training mode.
             self.learning_rate = tf.placeholder(tf.float32)  # Learning rate.
 
@@ -191,28 +192,3 @@ class MnistCNN(object):
 
         predictions = np.argmax(probs, axis=1)
         return predictions, probs, activations
-
-
-"""
-# Load MNIST and, if omniglot_bool, Omniglot datasets.
-x_train, y_train, x_val, y_val, x_test, y_test = load_datasets(test_size=10, omniglot_bool=True, force=False)
-
-# Build model.
-tf.reset_default_graph()
-sess = tf.Session()
-net = MnistCNN(sess)
-
-# Train model.
-net.train_model(x_train, y_train, x_val, y_val, epochs=1, verbose=1)
-
-# Test model.
-preds, _, activations = net.predict(x_test)
-
-# Evaluate with accuracy.
-accuracy = np.sum(np.argmax(y_test, 1) == preds)
-print(f'Test accuracy {accuracy/len(y_test)} %')
-
-print(np.shape(x_test))
-for i in range(len(activations)):
-    print(np.shape(activations[i]))
-"""
