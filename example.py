@@ -12,7 +12,7 @@ sess = tf.Session()
 net = MnistCNN(sess)
 
 # Train model.
-net.train_model(mnist.train.images, mnist.train.labels,
+train_loss, val_loss = net.train_model(mnist.train.images, mnist.train.labels,
                 mnist.validation.images, mnist.validation.labels, epochs=1, verbose=1)
 
 # Test model.

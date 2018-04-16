@@ -13,7 +13,7 @@ net = MnistCNN(sess, save_dir='./MnistCNN_save/')
 #### Train the model
 The model is trained using the 'train_model' function. The function expect training data: 'x_train' with the shape [n_examples, 28, 28, 1] and one-hot encoded labels with the shape [n_examples, 10]. The same goes for the validation data. In addition optional parameters includes 'batch_size', 'epochs', 'learning_rate' and 'verbose'.
 ```python
-net.train_model(x_train, y_train, x_val, y_val, epochs=50, learning_rate=1e-2, verbose=1)
+train_loss, val_loss = net.train_model(x_train, y_train, x_val, y_val, epochs=50, learning_rate=1e-2, verbose=1)
 ```
 
 #### Inference

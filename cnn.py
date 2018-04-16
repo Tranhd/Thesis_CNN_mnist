@@ -135,6 +135,8 @@ class MnistCNN(object):
         except:
             self.sess.run(tf.global_variables_initializer())  # Otherwise initialize.
 
+        train_loss = list()
+        val_loss = list()
         N = len(x_train) // batch_size # Number of iterations per epoch
         print('Starting training ...')
         for epoch in range(epochs):
@@ -157,15 +159,16 @@ class MnistCNN(object):
                     batch_start = batch_end  # Next batch.
                     batch_end = batch_end + batch_size
             if verbose:
-                print(f'Average Training loss {loss/N}')  # Print average training loss for epoch.
-
+                print(f'Mini-batch loss {loss_}')  # Print average training loss for epoch.
+            train_loss.append(loss_)
             # Evaluate on validation set.
             validation_loss = self.loss.eval(session=self.sess,
                                              feed_dict={self.inputs: x_val, self.labels: y_val, self.training: False})
+            val_loss.append(validation_loss)
             if verbose:
                 print(f'Validation loss {validation_loss}')  # Print validation loss for epoch
         self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt')  # Save parameters.
-
+        return train_loss, validation_loss
     def predict(self, test_image, dropout_enabled=False):
         """
         Predicts the class of test_image
