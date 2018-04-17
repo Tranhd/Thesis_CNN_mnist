@@ -129,6 +129,14 @@ class MnistCNN(object):
             Learning rate
         :param verbose: verbose (optional): binary 0 or 1
             Specifies level of Info
+        :return train_loss: list
+            minibatch training loss history
+        :return train_accuracy: list
+            minibatch training accuracy history
+        :return val_loss: list
+            minibatch validation loss history
+        :return val_accuracy: list
+            minibatch validation accuracy history
         """
         try:
             self.saver.restore(self.sess, tf.train.latest_checkpoint(self.save_dir))  # Restore if checkpoint exists.
@@ -138,6 +146,8 @@ class MnistCNN(object):
 
         train_loss = list()
         val_loss = list()
+        train_accuracy = list()
+        val_accuracy = list()
         N = len(x_train) // batch_size  # Number of iterations per epoch
         print('Starting training ...')
         for epoch in range(epochs):
@@ -159,17 +169,25 @@ class MnistCNN(object):
                     loss = loss + loss_  # Add to total epoch loss.
                     batch_start = batch_end  # Next batch.
                     batch_end = batch_end + batch_size
+            train_accuracy_ = np.sum(
+                np.argmax(self.sess.run([self.predictions], feed_dict={self.inputs: x_batch, self.training: False})[0],
+                          1) == np.argmax(y_batch, 1))/len(x_batch)
             if verbose:
-                print(f'Mini-batch loss {loss_}')  # Print training loss for epoch.
+                print(f'Mini-batch loss {loss_}, Mini-batch accuracy {train_accuracy_*100}%')
             train_loss.append(loss_)
+            train_accuracy.append(train_accuracy_)
             # Evaluate on validation set.
             validation_loss = self.loss.eval(session=self.sess,
                                              feed_dict={self.inputs: x_val, self.labels: y_val, self.training: False})
+            val_accuracy_ = np.sum(
+                np.argmax(self.sess.run([self.predictions], feed_dict={self.inputs: x_val, self.training: False})[0],
+                          1) == np.argmax(y_val, 1))/len(x_val)
+            val_accuracy.append(val_accuracy_)
             val_loss.append(validation_loss)
             if verbose:
-                print(f'Validation loss {validation_loss}')  # Print validation loss for epoch
+                print(f'Validation loss {validation_loss}, Validation accuracy {val_accuracy_*100}%')  # Print validation loss for epoch
         self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt')  # Save parameters.
-        return train_loss, val_loss
+        return train_loss, train_accuracy, val_loss, val_accuracy
 
     def predict(self, test_image, dropout_enabled=False):
         """

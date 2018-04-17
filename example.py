@@ -12,15 +12,15 @@ sess = tf.Session()
 net = MnistCNN(sess)
 
 # Train model.
-train_loss, val_loss = net.train_model(mnist.train.images, mnist.train.labels,
-                mnist.validation.images, mnist.validation.labels, epochs=1, verbose=1)
+train_loss, train_acc, val_loss, val_acc = net.train_model(mnist.train.images, mnist.train.labels,
+                mnist.validation.images, mnist.validation.labels, epochs=3, verbose=1)
 
 # Test model.
-preds, _, activations = net.predict(mnist.train.images)
+preds, _, activations = net.predict(mnist.test.images)
 
 # Evaluate with accuracy.
 accuracy = np.sum(np.argmax(mnist.test.labels, 1) == preds)
-print(f'Test accuracy {accuracy/len(y_test)} %')
+print(f'Test accuracy {accuracy/len(mnist.test.labels)} %')
 
 for i in range(len(activations)):
     print(f'Activations-shape of layer {i+1}: {np.shape(activations[i])}')
