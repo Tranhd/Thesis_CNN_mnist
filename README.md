@@ -28,6 +28,6 @@ predictions, probs, activations = net.predict(x_test)
 ```
  To calculate the accuracy of the predictions the following code-snippet can be used:
  ```python
-accuracy = np.sum(np.argmax(y_test, 1) == preds)
+accuracy = np.sum(np.argmax(y_test, 1) == predictions)
 print(f'Test accuracy {accuracy/len(y_test)} %')
 ```
