@@ -8,7 +8,7 @@ import numpy as np
 
 
 class MnistCNN(object):
-    def __init__(self, sess, save_dir='./MnistCNN_save/'):
+    def __init__(self, sess, save_dir='./Mnist_save/'):
         """
         Init-function of the Mnist CNN class
 
@@ -43,7 +43,6 @@ class MnistCNN(object):
             When model has no checkpoint and weights to load.
         """
         with tf.variable_scope('Network'):
-
             # Convolutional Layer #1
             conv1 = tf.layers.conv2d(
                 inputs=input,
@@ -87,7 +86,7 @@ class MnistCNN(object):
         with tf.variable_scope('Placeholders'):
             self.inputs = tf.placeholder(tf.float32, [None, 28, 28, 1])  # Mnist input.
             self.labels = tf.placeholder(tf.int16, [None, 10])  # Labels, one-hot encoded.
-            #self.training = tf.placeholder_with_default(False, (), name='mode')
+            # self.training = tf.placeholder_with_default(False, (), name='mode')
             self.training = tf.placeholder(tf.bool)  # Bool indicating if in training mode.
             self.learning_rate = tf.placeholder(tf.float32)  # Learning rate.
 
@@ -101,10 +100,12 @@ class MnistCNN(object):
 
         # Loss.
         with tf.variable_scope('Loss'):
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=self.logits)  # Cross entropy loss
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=self.labels,
+                                                                    logits=self.logits)  # Cross entropy loss
             self.loss = tf.reduce_mean(cross_entropy)  # Loss
 
-        self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(self.loss)  # Optimizer
+        self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.learning_rate).minimize(
+            self.loss)  # Optimizer
 
         self.saver = tf.train.Saver()  # Saver
 
@@ -137,13 +138,13 @@ class MnistCNN(object):
 
         train_loss = list()
         val_loss = list()
-        N = len(x_train) // batch_size # Number of iterations per epoch
+        N = len(x_train) // batch_size  # Number of iterations per epoch
         print('Starting training ...')
         for epoch in range(epochs):
             idx = np.random.permutation(len(x_train))
             x, y = x_train[idx], y_train[idx]  # Shuffle training data.
             if verbose:
-                print('='*30 + f' Epoch {epoch+1} ' + '='*30)
+                print('=' * 30 + f' Epoch {epoch+1} ' + '=' * 30)
             loss = 0
             batch_start = 0
             batch_end = batch_size
@@ -159,7 +160,7 @@ class MnistCNN(object):
                     batch_start = batch_end  # Next batch.
                     batch_end = batch_end + batch_size
             if verbose:
-                print(f'Mini-batch loss {loss_}')  # Print average training loss for epoch.
+                print(f'Mini-batch loss {loss_}')  # Print training loss for epoch.
             train_loss.append(loss_)
             # Evaluate on validation set.
             validation_loss = self.loss.eval(session=self.sess,
@@ -168,7 +169,8 @@ class MnistCNN(object):
             if verbose:
                 print(f'Validation loss {validation_loss}')  # Print validation loss for epoch
         self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt')  # Save parameters.
-        return train_loss, validation_loss
+        return train_loss, val_loss
+
     def predict(self, test_image, dropout_enabled=False):
         """
         Predicts the class of test_image
@@ -188,10 +190,12 @@ class MnistCNN(object):
             When model has no checkpoint and weights to load.
         """
         if self.restored == False:
-            raise Exception(f'Train the model before testing, cant find checkpoint in {self.save_dir}')  # Otherwise => Exception.
+            raise Exception(
+                f'Train the model before testing, cant find checkpoint in {self.save_dir}')  # Otherwise => Exception.
 
         probs, activations = self.sess.run([self.predictions, self.activations],
-                                           feed_dict={self.inputs: test_image, self.training: dropout_enabled})  # Predict.
+                                           feed_dict={self.inputs: test_image,
+                                                      self.training: dropout_enabled})  # Predict.
 
         predictions = np.argmax(probs, axis=1)
         return predictions, probs, activations
