@@ -186,7 +186,7 @@ class MnistCNN(object):
             val_loss.append(validation_loss)
             if verbose:
                 print(f'Validation loss {validation_loss}, Validation accuracy {val_accuracy_*100}%')  # Print validation loss for epoch
-        self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt')  # Save parameters.
+            self.saver.save(self.sess, save_path=self.save_dir + 'Cnn_mnist.ckpt')  # Save parameters.
         return train_loss, train_accuracy, val_loss, val_accuracy
 
     def predict(self, test_image, dropout_enabled=False):
